@@ -1,0 +1,203 @@
+/* 通用样式 */
+body {
+    font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+    color: #333;
+    background-color: #f5f5f5;
+}
+
+.content-section {
+    min-height: 50vh;
+}
+
+/* 导航栏样式 */
+.navbar-brand {
+    font-weight: 600;
+}
+
+/* 卡片样式 */
+.card {
+    border-radius: 10px;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* 地图标记样式 */
+.venue-marker {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    color: white;
+    line-height: 30px;
+    text-align: center;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.marker-library {
+    background-color: #3498db;  /* 蓝色 */
+}
+
+.marker-museum {
+    background-color: #e74c3c;  /* 红色 */
+}
+
+.marker-gallery {
+    background-color: #9b59b6;  /* 紫色 */
+}
+
+.marker-cultural {
+    background-color: #f39c12;  /* 橙色 */
+}
+
+/* 表格样式 */
+.table th {
+    font-weight: 600;
+}
+
+/* 按钮样式 */
+.btn {
+    border-radius: 5px;
+}
+
+.btn-primary {
+    background-color: #3498db;
+    border-color: #3498db;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
+}
+
+/* 徽章样式 */
+.badge {
+    font-weight: 500;
+    padding: 5px 8px;
+    border-radius: 4px;
+}
+
+/* 活动卡片样式 */
+.card-subtitle {
+    font-size: 0.9rem;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .card {
+        margin-bottom: 15px;
+    }
+    
+    .container {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+}
+
+/* 数据分析图表容器 */
+.chart-container {
+    width: 100%;
+    height: 400px;
+    margin-bottom: 30px;
+}
+
+/* 反馈词云样式 */
+.word-cloud-word {
+    display: inline-block;
+    margin-right: 10px;
+    margin-bottom: 5px;
+}
+
+/* 列表样式 */
+.list-group-item {
+    border-left: none;
+    border-right: none;
+    padding: 12px 15px;
+}
+
+.list-group-item:first-child {
+    border-top: none;
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+/* 访客反馈卡片 */
+.feedback-card {
+    border-left: 4px solid #3498db;
+    background-color: #f8f9fa;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+}
+
+.feedback-card.positive {
+    border-left-color: #2ecc71;
+}
+
+.feedback-card.negative {
+    border-left-color: #e74c3c;
+}
+
+.feedback-card.neutral {
+    border-left-color: #f39c12;
+}
+
+/* 评分星星 */
+.star-rating {
+    color: #f1c40f;
+    font-size: 1.1rem;
+}
+
+/* 加载动画 */
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* 搜索结果样式 */
+#searchResults .list-group {
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
+/* 底部样式 */
+footer {
+    color: #666;
+}
+
+footer a {
+    color: #333;
+    text-decoration: none;
+}
+
+footer a:hover {
+    color: #3498db;
+    text-decoration: none;
+}
+
+/* 地图信息窗体 */
+.amap-info-window {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.amap-info-content {
+    padding: 0 !important;
+    border-radius: 8px;
+}
+
+/* 数据分析页面样式 */
+.chart-container {
+    height: 400px;
+    margin-bottom: 30px;
+}

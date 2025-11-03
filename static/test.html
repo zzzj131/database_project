@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>场馆API测试页面</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .card {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .card-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .badge {
+            background-color: #007bff;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #error {
+            color: red;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .venue-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h1>场馆API测试页面</h1>
+    <button id="testButton">加载场馆数据</button>
+    <div id="error"></div>
+    <div id="status"></div>
+    <div id="venueContainer" class="venue-container"></div>
+    
+    <script>
+        document.getElementById('testButton').addEventListener('click', function() {
+            const statusDiv = document.getElementById('status');
+            const errorDiv = document.getElementById('error');
+            const venueContainer = document.getElementById('venueContainer');
+            
+            // 清空之前的内容
+            errorDiv.textContent = '';
+            statusDiv.textContent = '正在加载数据...';
+            venueContainer.innerHTML = '';
+            
+            // 请求场馆数据
+            fetch('/api/venues')
+                .then(response => {
+                    statusDiv.textContent = `API响应状态码: ${response.status}`;
+                    if (!response.ok) {
+                        throw new Error(`HTTP错误，状态码: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 更新状态
+                    statusDiv.textContent = `成功加载 ${data.length} 个场馆数据`;
+                    
+                    // 显示场馆卡片
+                    data.forEach(venue => {
+                        const card = document.createElement('div');
+                        card.className = 'card';
+                        
+                        card.innerHTML = `
+                            <div class="card-header">
+                                <span>${venue.name}</span>
+                                <span class="badge">${venue.type}</span>
+                            </div>
+                            <div class="card-body">
+                                <p>地址: ${venue.address}</p>
+                                <p>开放时间: ${venue.opening_hours}</p>
+                            </div>
+                        `;
+                        
+                        venueContainer.appendChild(card);
+                    });
+                })
+                .catch(error => {
+                    errorDiv.textContent = `错误: ${error.message}`;
+                });
+        });
+    </script>
+</body>
+</html> 

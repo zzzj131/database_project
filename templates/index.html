@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>武汉市公共文化设施分析系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Echarts图表库 -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-landmark me-2"></i>武汉市公共文化设施分析系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" data-section="venueMap">
+                            <i class="fas fa-map-marker-alt me-1"></i>场馆地图
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-section="analytics">
+                            <i class="fas fa-chart-line me-1"></i>数据分析
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-section="events">
+                            <i class="fas fa-calendar-alt me-1"></i>展览活动
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-section="reservation">
+                            <i class="fas fa-ticket-alt me-1"></i>参观预约
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-section="feedback">
+                            <i class="fas fa-comment me-1"></i>访客反馈
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown" id="userDropdown" style="display:none;">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user-circle me-1"></i><span id="usernameDisplay">用户</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="#" id="profileLink"><i class="fas fa-id-card me-2"></i>个人信息</a></li>
+                            <li><a class="dropdown-item" href="#" id="myReservationsLink"><i class="fas fa-ticket-alt me-2"></i>我的预约</a></li>
+                            <li id="adminPanelLink" style="display:none;"><a class="dropdown-item" href="#" data-section="adminPanel"><i class="fas fa-cogs me-2"></i>管理后台</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" id="logoutLink"><i class="fas fa-sign-out-alt me-2"></i>退出登录</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item" id="loginBtn">
+                        <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">
+                            <i class="fas fa-sign-in-alt me-1"></i>登录
+                        </a>
+                    </li>
+                    <li class="nav-item" id="registerBtn">
+                        <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#registerModal">
+                            <i class="fas fa-user-plus me-1"></i>注册
+                        </a>
+                    </li>
+                </ul>
+                <form class="d-flex ms-3" id="searchForm">
+                    <input class="form-control me-2" type="search" placeholder="搜索场馆或展览..." id="searchInput">
+                    <button class="btn btn-light" type="submit"><i class="fas fa-search"></i></button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 搜索结果模态框 -->
+    <div class="modal fade" id="searchResultModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">搜索结果</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="searchResults">
+                    <!-- 搜索结果将在这里动态显示 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 用户登录模态框 -->
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">用户登录</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="loginUsername" class="form-label">用户名</label>
+                            <input type="text" class="form-control" id="loginUsername" name="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="loginPassword" class="form-label">密码</label>
+                            <input type="password" class="form-control" id="loginPassword" name="password" required>
+                        </div>
+                        <div class="alert alert-danger d-none" id="loginError"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="loginSubmitBtn">登录</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 用户注册模态框 -->
+    <div class="modal fade" id="registerModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">用户注册</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="registerForm">
+                        <div class="mb-3">
+                            <label for="registerUsername" class="form-label">用户名</label>
+                            <input type="text" class="form-control" id="registerUsername" name="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerPassword" class="form-label">密码</label>
+                            <input type="password" class="form-control" id="registerPassword" name="password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerEmail" class="form-label">邮箱</label>
+                            <input type="email" class="form-control" id="registerEmail" name="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerPhone" class="form-label">手机号码（选填）</label>
+                            <input type="tel" class="form-control" id="registerPhone" name="phone">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">年龄段</label>
+                            <select class="form-select" name="age_group" required>
+                                <option value="">请选择...</option>
+                                <option value="儿童(0-12)">儿童(0-12)</option>
+                                <option value="青少年(13-18)">青少年(13-18)</option>
+                                <option value="青年(19-30)">青年(19-30)</option>
+                                <option value="中年(31-50)">中年(31-50)</option>
+                                <option value="老年(51+)">老年(51+)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">职业类型</label>
+                            <select class="form-select" name="occupation_type" required>
+                                <option value="">请选择...</option>
+                                <option value="学生">学生</option>
+                                <option value="教师">教师</option>
+                                <option value="公务员">公务员</option>
+                                <option value="企业职员">企业职员</option>
+                                <option value="自由职业">自由职业</option>
+                                <option value="退休人员">退休人员</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">性别</label>
+                            <select class="form-select" name="gender" required>
+                                <option value="">请选择...</option>
+                                <option value="男">男</option>
+                                <option value="女">女</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">教育水平</label>
+                            <select class="form-select" name="education_level" required>
+                                <option value="">请选择...</option>
+                                <option value="小学及以下">小学及以下</option>
+                                <option value="初中">初中</option>
+                                <option value="高中">高中</option>
+                                <option value="大专/本科">大专/本科</option>
+                                <option value="研究生及以上">研究生及以上</option>
+                            </select>
+                        </div>
+                        <div class="alert alert-danger d-none" id="registerError"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="registerSubmitBtn">注册</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div class="container my-4">
+        <!-- 场馆地图部分 -->
+        <section id="venueMap" class="content-section active">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h4 class="card-title mb-0">武汉市公共文化设施分布</h4>
+                </div>
+                <div class="card-body">
+                    <div id="mapContainer" style="height: 500px;"></div>
+                </div>
+            </div>
+            
+            <div class="row" id="venueCards">
+                <!-- 场馆卡片将在这里动态生成 -->
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">正在加载场馆信息...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 数据分析部分 -->
+        <section id="analytics" class="content-section d-none">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white">
+                            <h5 class="card-title mb-0">访客流量趋势</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <select class="form-select form-select-sm" id="trendPeriodSelect">
+                                    <option value="monthly">按月</option>
+                                    <option value="weekly">按周</option>
+                                    <option value="daily">按日</option>
+                                </select>
+                            </div>
+                            <div id="visitorTrendsChart" style="height: 300px;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white">
+                            <h5 class="card-title mb-0">场馆类型访问量分布</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="venueTypePieChart" style="height: 300px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white">
+                            <h5 class="card-title mb-0">访客年龄分布</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="visitorAgeChart" style="height: 300px;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white">
+                            <h5 class="card-title mb-0">不同职业访客的场馆偏好</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="occupationPreferenceChart" style="height: 300px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white">
+                            <h5 class="card-title mb-0">活动类型受欢迎程度</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="eventPopularityChart" style="height: 300px;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white">
+                            <h5 class="card-title mb-0">访问时间分布</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <select class="form-select form-select-sm" id="timeDistributionTypeSelect">
+                                    <option value="hourly">按小时</option>
+                                    <option value="weekly">按星期</option>
+                                </select>
+                            </div>
+                            <div id="timeDistributionChart" style="height: 300px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">最受欢迎的展览/活动TOP10</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th scope="col">排名</th>
+                                    <th scope="col">活动名称</th>
+                                    <th scope="col">场馆</th>
+                                    <th scope="col">类型</th>
+                                    <th scope="col">访客数</th>
+                                    <th scope="col">满意度</th>
+                                </tr>
+                            </thead>
+                            <tbody id="topEventsTable">
+                                <!-- 数据将动态加载 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 展览活动部分 -->
+        <section id="events" class="content-section d-none">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h4 class="card-title mb-0">当前展览与活动</h4>
+                    <div class="d-flex">
+                        <select class="form-select form-select-sm me-2" id="eventTypeFilter">
+                            <option value="">所有类型</option>
+                            <option value="常设展览">常设展览</option>
+                            <option value="临时展览">临时展览</option>
+                            <option value="讲座">讲座</option>
+                            <option value="工作坊">工作坊</option>
+                            <option value="表演">表演</option>
+                            <option value="其他活动">其他活动</option>
+                        </select>
+                        <select class="form-select form-select-sm" id="venueFilter">
+                            <option value="">所有场馆</option>
+                            <!-- 场馆选项将动态加载 -->
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row" id="eventsContainer">
+                        <!-- 展览和活动卡片将在这里动态生成 -->
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">正在加载活动信息...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 活动详情模态框 -->
+            <div class="modal fade" id="eventDetailModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="eventDetailTitle">活动详情</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body" id="eventDetailContent">
+                            <!-- 活动详情将在这里动态显示 -->
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                            <button type="button" class="btn btn-primary" id="reserveEventBtn">预约</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 参观预约部分 -->
+        <section id="reservation" class="content-section d-none">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h4 class="card-title mb-0">参观预约</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info" id="visitorLoginAlert">
+                        <i class="fas fa-info-circle me-2"></i>请先登录或注册成为会员，才能进行预约和记录参观。
+                        <button class="btn btn-sm btn-primary ms-3" data-bs-toggle="modal" data-bs-target="#loginModal">登录</button>
+                        <button class="btn btn-sm btn-outline-primary ms-2" data-bs-toggle="modal" data-bs-target="#registerModal">注册</button>
+                    </div>
+                    
+                    <div id="visitorInfoPanel" class="d-none">
+                        <div class="alert alert-success mb-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>欢迎回来，</strong> <span id="visitorWelcomeName"></span>
+                                    <span class="ms-3" id="visitorDetails"></span>
+                                </div>
+                                <button class="btn btn-sm btn-outline-success" id="changeVisitorBtn">更改信息</button>
+                            </div>
+                        </div>
+                        
+                        <ul class="nav nav-tabs mb-3" id="reservationTabs">
+                            <li class="nav-item">
+                                <a class="nav-link active" data-bs-toggle="tab" href="#newReservation">新预约</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="tab" href="#myReservations">我的预约</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="tab" href="#visitRecord">访问记录</a>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content">
+                            <div class="tab-pane fade show active" id="newReservation">
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">选择场馆</label>
+                                        <select class="form-select" id="reservationVenueSelect">
+                                            <option value="">请选择场馆...</option>
+                                            <!-- 场馆选项将动态加载 -->
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">选择活动</label>
+                                        <select class="form-select" id="reservationEventSelect" disabled>
+                                            <option value="">请先选择场馆...</option>
+                                            <!-- 活动选项将动态加载 -->
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">&nbsp;</label>
+                                        <button class="btn btn-primary w-100" id="submitReservationBtn" disabled>提交预约</button>
+                                    </div>
+                                </div>
+                                
+                                <div id="eventPreviewPanel" class="mt-3 d-none">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h5 class="card-title" id="previewEventName"></h5>
+                                            <p class="card-text" id="previewEventDetails"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="tab-pane fade" id="myReservations">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">预约ID</th>
+                                                <th scope="col">活动名称</th>
+                                                <th scope="col">场馆</th>
+                                                <th scope="col">活动时间</th>
+                                                <th scope="col">状态</th>
+                                                <th scope="col">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="myReservationsTable">
+                                            <!-- 我的预约数据将动态加载 -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <div class="tab-pane fade" id="visitRecord">
+                                <form id="visitRecordForm">
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">场馆</label>
+                                            <select class="form-select" name="venue_id" required>
+                                                <option value="">请选择...</option>
+                                                <!-- 场馆选项将动态加载 -->
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">活动(可选)</label>
+                                            <select class="form-select" name="event_id">
+                                                <option value="">无/不参加特定活动</option>
+                                                <!-- 活动选项将动态加载 -->
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">满意度</label>
+                                            <select class="form-select" name="satisfaction_rating">
+                                                <option value="">请选择...</option>
+                                                <option value="5">5分 (非常满意)</option>
+                                                <option value="4">4分 (满意)</option>
+                                                <option value="3">3分 (一般)</option>
+                                                <option value="2">2分 (不满意)</option>
+                                                <option value="1">1分 (非常不满意)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">反馈意见(可选)</label>
+                                        <textarea class="form-control" name="feedback" rows="3" placeholder="请分享您的访问体验..."></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">提交访问记录</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 访客反馈部分 -->
+        <section id="feedback" class="content-section d-none">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h4 class="card-title mb-0">访客反馈分析</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">场馆满意度排名</h5>
+                                    <div id="venueSatisfactionChart" style="height: 300px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">访客反馈词云</h5>
+                                    <div id="feedbackWordCloudChart" style="height: 300px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h5 class="mb-3">最新访客反馈</h5>
+                    <div id="recentFeedbacks">
+                        <!-- 最新访客反馈将在这里动态显示 -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 管理后台部分 -->
+        <section id="adminPanel" class="content-section d-none">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h4 class="card-title mb-0">管理后台</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="nav nav-tabs mb-3" id="adminTabs">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#reservationManagement">预约管理</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#eventManagement">活动管理</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#visitorManagement">用户管理</a>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content">
+                        <!-- 预约管理标签页 -->
+                        <div class="tab-pane fade show active" id="reservationManagement">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0">预约列表</h5>
+                                <div>
+                                    <select class="form-select form-select-sm" id="reservationStatusFilter">
+                                        <option value="">所有状态</option>
+                                        <option value="待审批">待审批</option>
+                                        <option value="已批准">已批准</option>
+                                        <option value="已参加">已参加</option>
+                                        <option value="已取消">已取消</option>
+                                        <option value="已拒绝">已拒绝</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>预约ID</th>
+                                            <th>活动名称</th>
+                                            <th>预约时间</th>
+                                            <th>访客</th>
+                                            <th>状态</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="adminReservationsTable">
+                                        <!-- 数据将动态加载 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- 活动管理标签页 -->
+                        <div class="tab-pane fade" id="eventManagement">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0">活动列表</h5>
+                                <button class="btn btn-primary btn-sm" id="createEventBtn">
+                                    <i class="fas fa-plus me-1"></i>创建活动
+                                </button>
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>活动名称</th>
+                                            <th>场馆</th>
+                                            <th>时间</th>
+                                            <th>状态</th>
+                                            <th>预约数</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="adminEventsTable">
+                                        <!-- 数据将动态加载 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- 用户管理标签页 -->
+                        <div class="tab-pane fade" id="visitorManagement">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0">用户列表</h5>
+                                <div>
+                                    <select class="form-select form-select-sm" id="visitorRoleFilter">
+                                        <option value="">所有角色</option>
+                                        <option value="user">普通用户</option>
+                                        <option value="venue_manager">场馆管理员</option>
+                                        <option value="admin">系统管理员</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>用户名</th>
+                                            <th>角色</th>
+                                            <th>邮箱</th>
+                                            <th>注册日期</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="adminVisitorsTable">
+                                        <!-- 数据将动态加载 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- 个人信息模态框 -->
+    <div class="modal fade" id="profileModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">个人信息</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="profileForm">
+                        <div class="mb-3">
+                            <label class="form-label">用户名</label>
+                            <input type="text" class="form-control" id="profileUsername" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">邮箱</label>
+                            <input type="email" class="form-control" id="profileEmail" name="email">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">手机号码</label>
+                            <input type="tel" class="form-control" id="profilePhone" name="phone">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">年龄段</label>
+                            <select class="form-select" id="profileAgeGroup" name="age_group">
+                                <option value="儿童(0-12)">儿童(0-12)</option>
+                                <option value="青少年(13-18)">青少年(13-18)</option>
+                                <option value="青年(19-30)">青年(19-30)</option>
+                                <option value="中年(31-50)">中年(31-50)</option>
+                                <option value="老年(51+)">老年(51+)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">职业类型</label>
+                            <select class="form-select" id="profileOccupation" name="occupation_type">
+                                <option value="学生">学生</option>
+                                <option value="教师">教师</option>
+                                <option value="公务员">公务员</option>
+                                <option value="企业职员">企业职员</option>
+                                <option value="自由职业">自由职业</option>
+                                <option value="退休人员">退休人员</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">性别</label>
+                            <select class="form-select" id="profileGender" name="gender">
+                                <option value="男">男</option>
+                                <option value="女">女</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">教育水平</label>
+                            <select class="form-select" id="profileEducation" name="education_level">
+                                <option value="小学及以下">小学及以下</option>
+                                <option value="初中">初中</option>
+                                <option value="高中">高中</option>
+                                <option value="大专/本科">大专/本科</option>
+                                <option value="研究生及以上">研究生及以上</option>
+                            </select>
+                        </div>
+                        <hr>
+                        <div class="mb-3">
+                            <h6>修改密码 (可选)</h6>
+                            <div class="mb-3">
+                                <label class="form-label">当前密码</label>
+                                <input type="password" class="form-control" id="currentPassword" name="current_password">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">新密码</label>
+                                <input type="password" class="form-control" id="newPassword" name="new_password">
+                            </div>
+                        </div>
+                        <div class="alert alert-danger d-none" id="profileError"></div>
+                        <div class="alert alert-success d-none" id="profileSuccess"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="updateProfileBtn">保存更改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 创建/编辑活动模态框 -->
+    <div class="modal fade" id="eventModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="eventModalTitle">创建活动</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="eventForm">
+                        <input type="hidden" id="eventId" name="event_id">
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label class="form-label">活动名称</label>
+                                <input type="text" class="form-control" id="eventName" name="name" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">活动类型</label>
+                                <select class="form-select" id="eventType" name="type" required>
+                                    <option value="">请选择...</option>
+                                    <option value="常设展览">常设展览</option>
+                                    <option value="临时展览">临时展览</option>
+                                    <option value="讲座">讲座</option>
+                                    <option value="工作坊">工作坊</option>
+                                    <option value="表演">表演</option>
+                                    <option value="其他活动">其他活动</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">场馆</label>
+                                <select class="form-select" id="eventVenue" name="venue_id" required>
+                                    <option value="">请选择...</option>
+                                    <!-- 场馆选项将动态加载 -->
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">开始日期</label>
+                                <input type="date" class="form-control" id="eventStartDate" name="start_date" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">结束日期</label>
+                                <input type="date" class="form-control" id="eventEndDate" name="end_date" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">容量（人数）</label>
+                                <input type="number" class="form-control" id="eventCapacity" name="capacity">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">是否需要门票</label>
+                                <div class="form-check form-switch mt-2">
+                                    <input class="form-check-input" type="checkbox" id="eventTicketRequired" name="ticket_required">
+                                    <label class="form-check-label" for="eventTicketRequired">需要门票</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">状态</label>
+                                <select class="form-select" id="eventStatus" name="status">
+                                    <option value="计划中">计划中</option>
+                                    <option value="正在进行">正在进行</option>
+                                    <option value="已结束">已结束</option>
+                                    <option value="已取消">已取消</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">活动描述</label>
+                            <textarea class="form-control" id="eventDescription" name="description" rows="5"></textarea>
+                        </div>
+                        <div class="alert alert-danger d-none" id="eventFormError"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveEventBtn">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 预约详情模态框 -->
+    <div class="modal fade" id="reservationDetailModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">预约详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="reservationDetailContent">
+                    <!-- 预约详情将在这里动态显示 -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <div class="btn-group" id="reservationActionBtns">
+                        <button type="button" class="btn btn-success" id="approveReservationBtn">批准预约</button>
+                        <button type="button" class="btn btn-danger" id="rejectReservationBtn">拒绝预约</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-light py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>武汉市公共文化设施分析系统</h5>
+                    <p>本系统提供武汉市主要公共文化设施的信息查询、数据分析和活动预约服务。</p>
+                </div>
+                <div class="col-md-3">
+                    <h5>快速链接</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" data-section="venueMap">场馆地图</a></li>
+                        <li><a href="#" data-section="analytics">数据分析</a></li>
+                        <li><a href="#" data-section="events">展览活动</a></li>
+                        <li><a href="#" data-section="reservation">参观预约</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>联系我们</h5>
+                    <address>
+                        <i class="fas fa-map-marker-alt me-2"></i>华中师范大学计算机学院<br>
+                        <i class="fas fa-phone me-2"></i>027-12345678<br>
+                        <i class="fas fa-envelope me-2"></i>info@wuhan-culture.com
+                    </address>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center">
+                <p class="mb-0">© 2025 武汉市公共文化设施分析系统 | 数据库课程设计</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- 高德地图API -->
+    <script src="https://webapi.amap.com/maps?v=2.0&key=62037a3b41c91eb48d2ed6a619e2c770&plugin=AMap.Scale,AMap.ToolBar,AMap.Geocoder"></script>
+    <!-- ECharts图表库 -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.0/dist/echarts.min.js"></script>
+    <!-- ECharts词云扩展 -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts-wordcloud@2.1.0/dist/echarts-wordcloud.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <!-- 调试脚本 -->
+    <script src="{{ url_for('static', filename='js/debug.js') }}"></script>
+</body>
+</html> 

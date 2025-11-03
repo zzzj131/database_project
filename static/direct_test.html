@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>场馆直接测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .venue {
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .venue h3 {
+            margin-top: 0;
+        }
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #status, #error {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #status {
+            background-color: #f2f2f2;
+        }
+        #error {
+            background-color: #ffdddd;
+            color: red;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>场馆直接测试</h1>
+    <button id="loadButton">加载场馆数据</button>
+    <div id="status"></div>
+    <div id="error"></div>
+    <div id="venueList"></div>
+    
+    <script>
+        document.getElementById('loadButton').addEventListener('click', function() {
+            const statusDiv = document.getElementById('status');
+            const errorDiv = document.getElementById('error');
+            const venueList = document.getElementById('venueList');
+            
+            errorDiv.style.display = 'none';
+            statusDiv.textContent = '正在加载数据...';
+            venueList.innerHTML = '';
+            
+            // 构建完整URL，确保无论环境如何都能访问API
+            const apiUrl = window.location.origin + '/api/venues';
+            statusDiv.textContent = `请求URL: ${apiUrl}`;
+            
+            // 发起请求，加上时间戳避免缓存
+            fetch(apiUrl + '?t=' + new Date().getTime(), {
+                headers: {
+                    'Cache-Control': 'no-cache'
+                }
+            })
+            .then(function(response) {
+                statusDiv.textContent += `\n响应状态: ${response.status}`;
+                
+                if (!response.ok) {
+                    throw new Error('HTTP错误，状态码: ' + response.status);
+                }
+                
+                return response.text();  // 先获取原始文本
+            })
+            .then(function(text) {
+                statusDiv.textContent += `\n获取到数据长度: ${text.length} 字节`;
+                
+                try {
+                    // 尝试解析JSON
+                    const data = JSON.parse(text);
+                    statusDiv.textContent += `\n数据类型: ${typeof data}`;
+                    statusDiv.textContent += `\n是否为数组: ${Array.isArray(data)}`;
+                    
+                    if (Array.isArray(data)) {
+                        statusDiv.textContent += `\n数组长度: ${data.length}`;
+                        
+                        if (data.length > 0) {
+                            // 显示第一条数据的JSON格式
+                            statusDiv.textContent += `\n第一条数据: ${JSON.stringify(data[0]).substring(0, 100)}...`;
+                            
+                            // 显示所有场馆
+                            data.forEach(function(venue) {
+                                const venueDiv = document.createElement('div');
+                                venueDiv.className = 'venue';
+                                venueDiv.innerHTML = `
+                                    <h3>${venue.name || '未命名'}</h3>
+                                    <p>类型: ${venue.type || '未知类型'}</p>
+                                    <p>地址: ${venue.address || '未知地址'}</p>
+                                    <p>开放时间: ${venue.opening_hours || '未知'}</p>
+                                `;
+                                venueList.appendChild(venueDiv);
+                            });
+                        } else {
+                            venueList.innerHTML = '<p>没有找到场馆数据</p>';
+                        }
+                    } else {
+                        throw new Error('返回的数据不是数组');
+                    }
+                } catch (e) {
+                    errorDiv.style.display = 'block';
+                    errorDiv.textContent = `解析JSON出错: ${e.message}\n\n数据前100个字符: ${text.substring(0, 100)}`;
+                }
+            })
+            .catch(function(error) {
+                errorDiv.style.display = 'block';
+                errorDiv.textContent = `错误: ${error.message}`;
+            });
+        });
+    </script>
+    
+    <!-- 自动加载 -->
+    <script>
+        // 页面加载完成后自动点击加载按钮
+        window.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                document.getElementById('loadButton').click();
+            }, 1000);
+        });
+    </script>
+</body>
+</html> 
